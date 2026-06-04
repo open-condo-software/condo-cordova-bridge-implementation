@@ -1,0 +1,43 @@
+{
+  "name": "@open-condo/cordova-bridge-implementation",
+  "version": "0.0.0-development",
+  "description": "Implementation of @open-condo/bridge API using cordova condo plugin",
+  "keywords": [
+    "condo",
+    "@open-condo",
+    "bridge",
+    "cordova",
+    "mobile",
+    "native",
+    "developers"
+  ],
+  "homepage": "https://github.com/open-condo-software/condo-cordova-bridge-implementation#readme",
+  "bugs": {
+    "url": "https://github.com/open-condo-software/condo-cordova-bridge-implementation/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/open-condo-software/condo-cordova-bridge-implementation.git"
+  },
+  "author": {
+    "name": "Matthew Savelev",
+    "email": "matthew@doma.ai",
+    "url": "https://github.com/SavelevMatthew"
+  },
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "esdk-obs-nodejs": "^3.26.2",
+    "execa": "^5.1.1",
+    "tar": "^7.5.16"
+  }
+}
