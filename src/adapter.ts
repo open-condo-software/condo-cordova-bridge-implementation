@@ -14,7 +14,7 @@ import type {
 	GetLaunchParamsParams,
 	GetLaunchParamsData,
 } from '@open-condo/bridge'
-import { z } from 'zod'
+import { z } from 'zod/mini'
 
 type SuccessCallback = (result: unknown) => void
 type ErrorCallback = (error: unknown) => void
