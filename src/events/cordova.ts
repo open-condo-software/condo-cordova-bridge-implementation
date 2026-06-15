@@ -21,6 +21,7 @@ import type {
 
 type SuccessCallback = (result: unknown) => void
 type ErrorCallback = (error: unknown) => void
+type CleanupFn = () => void
 
 declare global {
 	interface Window {
@@ -233,4 +234,30 @@ export function registerCordovaEvents(controller: PostMessageController) {
 			})
 		},
 	})
+}
+
+export function subscribeToCordovaEvents(): CleanupFn {
+	if (
+		typeof window === 'undefined' ||
+		typeof document === 'undefined' ||
+		typeof document.addEventListener !== 'function'
+	) {
+		return () => ({})
+	}
+
+	const backButtonListener = () => {
+		window.postMessage(
+			{
+				type: 'CondoWebAppBackButtonEvent',
+				data: {},
+			},
+			window.location.origin,
+		)
+	}
+
+	document.addEventListener('backbutton', backButtonListener)
+
+	return () => {
+		document.removeEventListener('backbutton', backButtonListener)
+	}
 }

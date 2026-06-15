@@ -1,5 +1,5 @@
 import { PostMessageController } from '@open-condo/miniapp-utils/helpers/messaging'
-import { registerCordovaEvents } from './events/cordova'
+import { registerCordovaEvents, subscribeToCordovaEvents } from './events/cordova'
 
 declare global {
 	interface Window {
@@ -17,10 +17,12 @@ function main() {
 	const controller = new PostMessageController()
 	controller.registerBridgeEvents({})
 	registerCordovaEvents(controller)
+	const unsubscribe = subscribeToCordovaEvents()
 
 	window.addEventListener('message', controller.eventListener)
 
 	function cleanup() {
+		unsubscribe()
 		window.removeEventListener('message', controller.eventListener)
 		delete window.__condoBridgeCleanup
 	}
