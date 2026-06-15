@@ -267,10 +267,10 @@ export function subscribeToCordovaEvents(): CleanupFn {
 	}
 
 	document.addEventListener('backbutton', backButtonListener)
-	document.addEventListener('condoPopstate', popStateListener)
+	window.addEventListener('condoPopstate', popStateListener)
 
 	return () => {
 		document.removeEventListener('backbutton', backButtonListener)
-		document.removeEventListener('condoPopstate', popStateListener)
+		window.removeEventListener('condoPopstate', popStateListener)
 	}
 }
