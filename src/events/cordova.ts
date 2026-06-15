@@ -198,7 +198,7 @@ export function registerCordovaEvents(controller: PostMessageController) {
 		'condo-bridge',
 		'CondoWebAppPopHistoryState',
 		'*',
-		zodSchemaToValidator(z.strictObject({ amount: z.int().nonnegative() })),
+		zodSchemaToValidator(z.strictObject({ amount: z.int().nonnegative().optional() })),
 		async ({ params }) => {
 			const cordovaHandler = window.cordova?.plugins?.condo?.history?.go
 			if (typeof cordovaHandler !== 'function') {
