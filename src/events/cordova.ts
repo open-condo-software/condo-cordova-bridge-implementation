@@ -9,6 +9,12 @@ import type {
 	GetFragmentData,
 	GetLaunchParamsParams,
 	GetLaunchParamsData,
+	PopHistoryStateParams,
+	PopHistoryStateData,
+	PushHistoryStateParams,
+	PushHistoryStateData,
+	ReplaceHistoryStateParams,
+	ReplaceHistoryStateData,
 	RequestAuthParams,
 	RequestAuthData,
 } from '@open-condo/bridge'
@@ -35,6 +41,22 @@ declare global {
 						deviceID: () => string
 						locale: () => string
 					}
+
+					history?: {
+						pushState?: (
+							state: unknown | null,
+							title: string | null,
+							success: SuccessCallback,
+							error: ErrorCallback,
+						) => void
+						replaceState?: (
+							state: unknown | null,
+							title: string | null,
+							success: SuccessCallback,
+							error: ErrorCallback,
+						) => void
+						go?: (amount: number, success: SuccessCallback, error: ErrorCallback) => void
+					}
 				}
 			}
 		}
@@ -52,6 +74,10 @@ const AUTH_RESPONSE_SCHEMA = z.object({
 	status: z.number(),
 	url: z.url(),
 	body: z.string().nullish(),
+})
+const HISTORY_STATE_SCHEMA = z.strictObject({
+	title: z.string().nullish(),
+	state: z.unknown().optional(),
 })
 const DEFAULT_LOCALE = 'ru_RU'
 
@@ -127,6 +153,65 @@ export function registerCordovaEvents(controller: PostMessageController) {
 			}
 
 			throw new Error('Cordova method error (getCurrentResident)')
+		},
+	)
+
+	controller.addHandler<PushHistoryStateParams, PushHistoryStateData>(
+		'condo-bridge',
+		'CondoWebAppPushHistoryState',
+		'*',
+		zodSchemaToValidator(HISTORY_STATE_SCHEMA),
+		async ({ params }) => {
+			const cordovaHandler = window.cordova?.plugins?.condo?.history?.pushState
+			if (typeof cordovaHandler !== 'function') {
+				throw new Error('Unsupported cordova method (history.pushState)')
+			}
+
+			return new Promise((resolve, reject) => {
+				cordovaHandler(params.state ?? null, params.title ?? null, resolve, reject)
+			})
+				.then(() => ({ success: true }))
+				.catch(() => ({ success: false }))
+		},
+	)
+
+	controller.addHandler<ReplaceHistoryStateParams, ReplaceHistoryStateData>(
+		'condo-bridge',
+		'CondoWebAppReplaceHistoryState',
+		'*',
+		zodSchemaToValidator(HISTORY_STATE_SCHEMA),
+		async ({ params }) => {
+			const cordovaHandler = window.cordova?.plugins?.condo?.history?.replaceState
+			if (typeof cordovaHandler !== 'function') {
+				throw new Error('Unsupported cordova method (history.pushState)')
+			}
+
+			return new Promise((resolve, reject) => {
+				cordovaHandler(params.state ?? null, params.title ?? null, resolve, reject)
+			})
+				.then(() => ({ success: true }))
+				.catch(() => ({ success: false }))
+		},
+	)
+
+	controller.addHandler<PopHistoryStateParams, PopHistoryStateData>(
+		'condo-bridge',
+		'CondoWebAppPopHistoryState',
+		'*',
+		zodSchemaToValidator(z.strictObject({ amount: z.int().nonnegative() })),
+		async ({ params }) => {
+			const cordovaHandler = window.cordova?.plugins?.condo?.history?.go
+			if (typeof cordovaHandler !== 'function') {
+				throw new Error('Unsupported cordova method (history.pushState)')
+			}
+
+			const amount = params.amount ?? 1
+
+			return new Promise((resolve, reject) => {
+				cordovaHandler(-amount, resolve, reject)
+			})
+				.then(() => ({ success: true }))
+				.catch(() => ({ success: false }))
 		},
 	)
 
