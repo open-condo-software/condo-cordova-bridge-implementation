@@ -255,9 +255,22 @@ export function subscribeToCordovaEvents(): CleanupFn {
 		)
 	}
 
+	const popStateListener = (event: unknown) => {
+		// const { success } = HISTORY_STATE_SCHEMA.safeParse(event)
+		window.postMessage(
+			{
+				type: 'CondoWebAppHistoryPopStateEvent',
+				data: event,
+			},
+			window.location.origin,
+		)
+	}
+
 	document.addEventListener('backbutton', backButtonListener)
+	document.addEventListener('condoPopstate', popStateListener)
 
 	return () => {
 		document.removeEventListener('backbutton', backButtonListener)
+		document.removeEventListener('condoPopstate', popStateListener)
 	}
 }
