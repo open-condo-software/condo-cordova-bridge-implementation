@@ -9,6 +9,8 @@ import type {
 	GetFragmentData,
 	GetLaunchParamsParams,
 	GetLaunchParamsData,
+	RequestAuthParams,
+	RequestAuthData,
 } from '@open-condo/bridge'
 
 type SuccessCallback = (result: unknown) => void
@@ -22,6 +24,12 @@ declare global {
 					closeApplication?: (success: SuccessCallback, error: ErrorCallback) => void
 					getCurrentResident?: (success: SuccessCallback, error: ErrorCallback) => void
 					getLaunchContext?: (success: SuccessCallback, error: ErrorCallback) => void
+					requestServerAuthorizationByUrl?: (
+						url: string,
+						_options: Record<string, never>,
+						success: SuccessCallback,
+						error: ErrorCallback,
+					) => void
 
 					hostApplication?: {
 						deviceID: () => string
@@ -39,6 +47,11 @@ const RESIDENT_SCHEMA = z.object({
 		id: z.uuid(),
 		type: z.enum(['staff', 'resident']),
 	}),
+})
+const AUTH_RESPONSE_SCHEMA = z.object({
+	status: z.number(),
+	url: z.url(),
+	body: z.string().nullish(),
 })
 const DEFAULT_LOCALE = 'ru_RU'
 
@@ -116,4 +129,23 @@ export function registerCordovaEvents(controller: PostMessageController) {
 			throw new Error('Cordova method error (getCurrentResident)')
 		},
 	)
+
+	controller.addMiddleware<RequestAuthParams, RequestAuthData>({
+		eventType: 'condo-bridge',
+		eventName: 'CondoWebAppRequestAuth',
+		scope: '*',
+		fn: async ({ next, params }) => {
+			const cordovaHandler = window.cordova?.plugins?.condo?.requestServerAuthorizationByUrl
+			if (typeof cordovaHandler !== 'function') {
+				return next()
+			}
+
+			return new Promise((resolve, reject) => {
+				cordovaHandler(params.url, {}, resolve, reject)
+			}).then((result) => {
+				const data = AUTH_RESPONSE_SCHEMA.parse(result)
+				return { response: { status: data.status, url: data.url, body: data.body ?? '' } }
+			})
+		},
+	})
 }
