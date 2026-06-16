@@ -8,7 +8,8 @@ declare global {
 }
 
 function main() {
-	if (typeof window === 'undefined') return
+	// For SSR / embedded usage skip injection
+	if (typeof window === 'undefined' || window.parent !== window) return
 
 	if (typeof window.__condoBridgeCleanup === 'function') {
 		window.__condoBridgeCleanup()
