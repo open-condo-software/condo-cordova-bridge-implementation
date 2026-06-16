@@ -4,6 +4,7 @@ const github = require('@mono-pub/github')
 const npm = require('@mono-pub/npm')
 const commitAnalyzer = require('@mono-pub/commit-analyzer')
 const execa = require('execa')
+const path = require('path')
 
 const BREAKING_KEYWORDS = ['BREAKING CHANGE', 'BREAKING-CHANGE', 'BREAKING CHANGES', 'BREAKING-CHANGES']
 
@@ -11,7 +12,7 @@ const BREAKING_KEYWORDS = ['BREAKING CHANGE', 'BREAKING-CHANGE', 'BREAKING CHANG
 const builder = {
 	name: '@mono-pub/local-builder',
 	async prepareSingle({ targetPackage }) {
-		await execa('npm', ['run', 'build'], { cwd: targetPackage.location })
+		await execa('npm', ['run', 'build'], { cwd: path.dirname(targetPackage.location) })
 	},
 }
 
@@ -19,7 +20,7 @@ const builder = {
 const assetPublisher = {
 	name: '@mono-pub/asset-publisher',
 	async publish({ location }) {
-		await execa('node', ['bin/upload.js '], { cwd: location, env: process.env })
+		await execa('node', ['bin/upload.js '], { cwd: path.dirname(location), env: process.env })
 	},
 }
 
