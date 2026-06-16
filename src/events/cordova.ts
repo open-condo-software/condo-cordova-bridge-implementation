@@ -197,7 +197,7 @@ export function registerCordovaEvents(controller: PostMessageController) {
 		async ({ params }) => {
 			const cordovaHandler = window.cordova?.plugins?.condo?.history?.replaceState
 			if (typeof cordovaHandler !== 'function') {
-				throw new Error('Unsupported cordova method (history.pushState)')
+				throw new Error('Unsupported cordova method (history.replaceState)')
 			}
 
 			const wrappedState: InternalHistoryState = {
@@ -221,7 +221,7 @@ export function registerCordovaEvents(controller: PostMessageController) {
 		async ({ params }) => {
 			const cordovaHandler = window.cordova?.plugins?.condo?.history?.go
 			if (typeof cordovaHandler !== 'function') {
-				throw new Error('Unsupported cordova method (history.pushState)')
+				throw new Error('Unsupported cordova method (history.go)')
 			}
 
 			const amount = params.amount ?? 1
