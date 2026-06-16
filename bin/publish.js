@@ -20,7 +20,7 @@ const builder = {
 const assetPublisher = {
 	name: '@mono-pub/asset-publisher',
 	async publish({ location }) {
-		await execa('node', ['bin/upload.js '], { cwd: path.dirname(location), env: process.env })
+		await execa('node', ['bin/upload.js'], { cwd: path.dirname(location), env: process.env })
 	},
 }
 
