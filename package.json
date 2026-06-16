@@ -37,8 +37,13 @@
     "access": "public"
   },
   "devDependencies": {
+    "@mono-pub/commit-analyzer": "^1.0.10",
+    "@mono-pub/git": "^1.0.10",
+    "@mono-pub/github": "^1.0.10",
+    "@mono-pub/npm": "^1.1.0",
     "esdk-obs-nodejs": "^3.26.2",
     "execa": "^5.1.1",
+    "mono-pub": "^2.2.1",
     "prettier": "^3.7.3",
     "tar": "^7.5.16",
     "tsup": "^8.5.1",
