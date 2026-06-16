@@ -48,6 +48,6 @@ publish(
 		}),
 		builder,
 		assetPublisher,
-		npm({ provenance: true, trustedPublishing: false }),
+		npm({ provenance: true, trustedPublishing: true }),
 	],
 )
