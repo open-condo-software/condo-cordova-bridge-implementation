@@ -17,6 +17,7 @@ import type {
 	ReplaceHistoryStateData,
 	RequestAuthParams,
 	RequestAuthData,
+	CondoBridgeIncomingEvent,
 } from '@open-condo/bridge'
 
 type SuccessCallback = (result: unknown) => void
@@ -81,6 +82,13 @@ const HISTORY_STATE_SCHEMA = z.strictObject({
 	state: z.unknown().optional(),
 })
 const DEFAULT_LOCALE = 'ru_RU'
+
+const INTERNAL_HISTORY_STATE_SCHEMA = z.strictObject({
+	__state: z.unknown().optional(),
+	__title: z.string().nullish(),
+})
+
+type InternalHistoryState = z.infer<typeof INTERNAL_HISTORY_STATE_SCHEMA>
 
 export function registerCordovaEvents(controller: PostMessageController) {
 	const sessionId = generateUUIDv4()
@@ -168,8 +176,13 @@ export function registerCordovaEvents(controller: PostMessageController) {
 				throw new Error('Unsupported cordova method (history.pushState)')
 			}
 
+			const wrappedState: InternalHistoryState = {
+				__state: params.state ?? null,
+				__title: params.title ?? null,
+			}
+
 			return new Promise((resolve, reject) => {
-				cordovaHandler(params.state ?? null, params.title ?? null, resolve, reject)
+				cordovaHandler(wrappedState, params.title ?? null, resolve, reject)
 			})
 				.then(() => ({ success: true }))
 				.catch(() => ({ success: false }))
@@ -187,8 +200,13 @@ export function registerCordovaEvents(controller: PostMessageController) {
 				throw new Error('Unsupported cordova method (history.pushState)')
 			}
 
+			const wrappedState: InternalHistoryState = {
+				__state: params.state ?? null,
+				__title: params.title ?? null,
+			}
+
 			return new Promise((resolve, reject) => {
-				cordovaHandler(params.state ?? null, params.title ?? null, resolve, reject)
+				cordovaHandler(wrappedState, params.title ?? null, resolve, reject)
 			})
 				.then(() => ({ success: true }))
 				.catch(() => ({ success: false }))
@@ -246,31 +264,44 @@ export function subscribeToCordovaEvents(): CleanupFn {
 	}
 
 	const backButtonListener = () => {
-		window.postMessage(
-			{
-				type: 'CondoWebAppBackButtonEvent',
-				data: {},
-			},
-			window.location.origin,
-		)
+		const eventData: CondoBridgeIncomingEvent<'CondoWebAppBackButton'> = {
+			type: 'CondoWebAppBackButtonEvent',
+			data: {},
+		}
+
+		window.postMessage(eventData, window.location.origin)
 	}
 
-	const popStateListener = (event: unknown) => {
-		// const { success } = HISTORY_STATE_SCHEMA.safeParse(event)
-		window.postMessage(
-			{
-				type: 'CondoWebAppHistoryPopStateEvent',
-				data: event,
+	const condoPopstateInterceptor = (event: any) => {
+		if (!('state' in event)) return
+		const { success, data } = INTERNAL_HISTORY_STATE_SCHEMA.safeParse(event.state)
+		if (!success) return
+
+		event.stopImmediatePropagation()
+
+		const eventData: CondoBridgeIncomingEvent<'CondoWebAppHistoryPopState'> = {
+			type: 'CondoWebAppHistoryPopStateEvent',
+			data: {
+				state: data?.__state ?? null,
+				title: data?.__title ?? null,
 			},
-			window.location.origin,
-		)
+		}
+
+		window.postMessage(eventData, window.location.origin)
+
+		const unwrapped = new PopStateEvent('condoPopstate', {
+			bubbles: event.bubbles,
+			cancelable: event.cancelable,
+			state: data.__state ?? null,
+		})
+		window.dispatchEvent(unwrapped)
 	}
 
 	document.addEventListener('backbutton', backButtonListener)
-	window.addEventListener('condoPopstate', popStateListener)
+	window.addEventListener('condoPopstate', condoPopstateInterceptor, { capture: true })
 
 	return () => {
 		document.removeEventListener('backbutton', backButtonListener)
-		window.removeEventListener('condoPopstate', popStateListener)
+		window.removeEventListener('condoPopstate', condoPopstateInterceptor, { capture: true })
 	}
 }
