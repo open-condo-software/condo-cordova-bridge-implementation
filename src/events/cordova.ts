@@ -17,6 +17,8 @@ import type {
 	ReplaceHistoryStateData,
 	RequestAuthParams,
 	RequestAuthData,
+	RequestPaymentParams,
+	RequestPaymentData,
 	CondoBridgeIncomingEvent,
 } from '@open-condo/bridge'
 
@@ -38,6 +40,7 @@ declare global {
 						success: SuccessCallback,
 						error: ErrorCallback,
 					) => void
+					startInvoicePayment?: (invoiceId: string, success: SuccessCallback, error: ErrorCallback) => void
 
 					hostApplication?: {
 						deviceID: () => string
@@ -81,7 +84,19 @@ const HISTORY_STATE_SCHEMA = z.strictObject({
 	title: z.string().nullish(),
 	state: z.unknown().optional(),
 })
+const INVOICES_PAYMENT_SCHEMA = z.object({
+	invoiceIds: z.array(z.uuid()).min(1),
+})
+const MULTIPAYMENT_PAYMENT_SCHEMA = z.object({
+	multiPaymentId: z.uuid(),
+})
+const PAYMENT_RESPONSE_SCHEMA = z.object({
+	multiPaymentId: z.string().nullish(),
+	status: z.string(),
+})
+
 const DEFAULT_LOCALE = 'ru_RU'
+const SUCCESSFUL_PAYMENT_STATUS = 'payment_success'
 
 const INTERNAL_HISTORY_STATE_SCHEMA = z.strictObject({
 	__state: z.unknown().optional(),
@@ -231,6 +246,39 @@ export function registerCordovaEvents(controller: PostMessageController) {
 			})
 				.then(() => ({ success: true }))
 				.catch(() => ({ success: false }))
+		},
+	)
+
+	controller.addHandler<RequestPaymentParams, RequestPaymentData>(
+		'condo-bridge',
+		'CondoWebAppRequestPayment',
+		'*',
+		zodSchemaToValidator(INVOICES_PAYMENT_SCHEMA.or(MULTIPAYMENT_PAYMENT_SCHEMA)),
+		({ params }) => {
+			if ('multiPaymentId' in params) {
+				throw new Error('Payment method for multipayment is not supported on this platform')
+			}
+
+			if (params.invoiceIds.length > 1) {
+				throw new Error('Payment method for multiple invoices is not supported on this platform')
+			}
+
+			const cordovaHandler = window.cordova?.plugins?.condo?.startInvoicePayment
+			if (typeof cordovaHandler !== 'function') {
+				throw new Error('Unsupported cordova method (startInvoicePayment)')
+			}
+
+			return new Promise((resolve, reject) => {
+				cordovaHandler(params.invoiceIds[0], resolve, reject)
+			}).then((result) => {
+				const data = PAYMENT_RESPONSE_SCHEMA.parse(result)
+
+				if (data.status !== SUCCESSFUL_PAYMENT_STATUS) {
+					throw new Error('Payment failed')
+				}
+
+				return { success: true, multiPaymentId: data.multiPaymentId ?? '' }
+			})
 		},
 	)
 
