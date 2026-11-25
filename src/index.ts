@@ -1,9 +1,11 @@
 import { PostMessageController } from '@open-condo/miniapp-utils/helpers/messaging'
 import { registerCordovaEvents, subscribeToCordovaEvents } from './events/cordova'
+import { version } from '../package.json'
 
 declare global {
 	interface Window {
 		__condoBridgeCleanup?: () => void
+		__condoBridgeAdapterVersion?: string
 	}
 }
 
@@ -29,6 +31,7 @@ function main() {
 	}
 
 	window.__condoBridgeCleanup = cleanup
+	window.__condoBridgeAdapterVersion = version
 	window.addEventListener('beforeunload', cleanup, { once: true })
 }
 
