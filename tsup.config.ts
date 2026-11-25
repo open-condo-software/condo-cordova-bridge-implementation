@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsup'
+import { name, version } from './package.json'
 
 export default defineConfig({
 	entry: { 'browser.min': 'src/index.ts' },
@@ -11,4 +12,7 @@ export default defineConfig({
 	platform: 'browser',
 	noExternal: [/.*/], // Bundle everything
 	outExtension: () => ({ js: '.js' }),
+	banner: {
+		js: `// ${name}@${version}`
+	}
 })

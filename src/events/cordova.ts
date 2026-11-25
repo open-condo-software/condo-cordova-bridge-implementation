@@ -105,6 +105,12 @@ const INTERNAL_HISTORY_STATE_SCHEMA = z.strictObject({
 
 type InternalHistoryState = z.infer<typeof INTERNAL_HISTORY_STATE_SCHEMA>
 
+function _sendPostMessageToSelf(data: Record<string, unknown>) {
+	if (typeof window === 'undefined') return
+	const origin = window.origin === 'null' ? '*' : window.origin
+	window.postMessage(data, origin)
+}
+
 export function registerCordovaEvents(controller: PostMessageController) {
 	const sessionId = generateUUIDv4()
 
@@ -317,7 +323,7 @@ export function subscribeToCordovaEvents(): CleanupFn {
 			data: {},
 		}
 
-		window.postMessage(eventData, window.location.origin)
+		_sendPostMessageToSelf(eventData)
 	}
 
 	const condoPopstateInterceptor = (event: any) => {
@@ -335,7 +341,7 @@ export function subscribeToCordovaEvents(): CleanupFn {
 			},
 		}
 
-		window.postMessage(eventData, window.location.origin)
+		_sendPostMessageToSelf(eventData)
 
 		const unwrapped = new PopStateEvent('condoPopstate', {
 			bubbles: event.bubbles,
